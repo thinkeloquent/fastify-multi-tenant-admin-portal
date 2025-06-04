@@ -1,0 +1,14 @@
+{
+  "name": "@internal/server",
+  "version": "1.0.0",
+  "main": "./src/index.mjs",
+  "scripts": {
+    "dev": "nodemon src/server.mjs",
+    "start": "node src/server.mjs",
+    "build": "mkdir -p dist && cp -r src/* dist/"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

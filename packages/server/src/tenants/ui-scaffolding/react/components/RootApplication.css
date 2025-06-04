@@ -1,0 +1,102 @@
+/* App Layout */
+.app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Environment Selector */
+.environment-selector {
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.environment-label {
+  font-weight: 500 !important;
+  color: #616161 !important;
+}
+
+.environment-buttons {
+  display: flex;
+  border: 1px solid #2196f3;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.env-button {
+  padding: 8px 16px !important;
+  text-transform: uppercase !important;
+  min-width: auto !important;
+  border-radius: 0 !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+}
+
+.active-env {
+  background-color: #1976d2 !important;
+  color: white !important;
+}
+
+.active-env:hover {
+  background-color: #1565c0 !important;
+}
+
+.inactive-env {
+  background-color: white !important;
+  color: #2196f3 !important;
+}
+
+.inactive-env:hover {
+  background-color: #e3f2fd !important;
+}
+
+.border-button {
+  border-left: 1px solid #2196f3 !important;
+  border-right: 1px solid #2196f3 !important;
+}
+
+.url-info {
+  margin-left: 8px;
+  color: #9e9e9e !important;
+  font-size: 0.875rem !important;
+}
+
+/* Dashboard */
+.dashboard {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 264px;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.env-display {
+  font-size: 6rem !important;
+  font-weight: 700 !important;
+  color: #424242 !important;
+  letter-spacing: -0.5px !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .environment-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .env-display {
+    font-size: 4rem !important;
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@internal/shared",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "mkdir -p dist && cp -r src/* dist/"
+  },
+  "dependencies": {
+    "casbin": "^5.38.0"
+  }
+}

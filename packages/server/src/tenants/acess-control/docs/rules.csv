@@ -1,0 +1,18 @@
+# HR department rules
+p, r.sub.userGroup == "HR" && r.sub.workspace == "US" && r.sub.applicationName == "HRApp", tenantA, /hr/, post, allow
+p, r.sub.userGroup == "HR" && r.sub.workspace == "US" && r.sub.applicationName == "HRApp", tenantA, /hr/, get, allow
+p, r.sub.userGroup == "HR-Admin" && r.sub.workspace == "US", tenantA, /hr/, delete, allow
+p, r.sub.userGroup == "HR" && r.sub.workspace != "US", tenantA, /hr/, post, deny
+
+# Finance department rules
+p, r.sub.userRole == "manager" && r.sub.market == "EU", tenantB, /finance/, get, allow
+p, r.sub.userRole == "finance-admin" && r.sub.market == "EU", tenantB, /finance/, post, allow
+p, r.sub.userRole == "manager" && r.sub.market == "EU", tenantB, /finance/, post, deny
+
+# Role-based rules (using direct role names instead of property checks)
+p, admin, tenantA, /admin/, *, allow
+p, viewer, tenantA, /reports/, get, allow
+
+# Role inheritance rules (using role names)
+g, editor, viewer, tenantA
+g, admin, editor, tenantA
