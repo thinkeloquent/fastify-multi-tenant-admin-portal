@@ -1,0 +1,12 @@
+{
+  "name": "fastify-multitenant-flat-json",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "tenant1: is the example tenant name",
+  "main": "index.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

@@ -1,5 +1,5 @@
 {
-  "name": "npm-fastify-01",
+  "name": "fastify-multi-tenant-admin-portal",
   "version": "1.0.3",
   "main": "./src/index.mjs",
   "scripts": {
@@ -10,13 +10,15 @@
   },
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "tenants/*"
   ],
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "fastify-multitenant-flat-json": "workspace:^",
     "@fastify/auth": "^5.0.2",
     "@fastify/compress": "^8.0.1",
     "@fastify/cookie": "^11.0.2",

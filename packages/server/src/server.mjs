@@ -2,10 +2,12 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
 import Fastify from "fastify";
-import { existsSync } from "fs";
+import { existsSync, statSync } from "fs";
 import fastGlob from "fast-glob";
 import closeWithGrace from "close-with-grace";
 import merge from "deepmerge";
+import { resolve } from "import-meta-resolve";
+import { findUp, pathExists } from "find-up";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,6 +38,48 @@ const contexts = {
     },
   },
 };
+
+async function getModuleAbsolutePath(specifier) {
+  try {
+    const resolvedUrl = await resolve(specifier, import.meta.url);
+    const absolutePath = fileURLToPath(resolvedUrl);
+    console.log({ resolvedUrl });
+    return absolutePath;
+  } catch (err) {
+    console.error(`Failed to resolve "${specifier}":`, err.message);
+    return null;
+  }
+}
+
+async function getModuleAbsolutePathRoot(specifier) {
+  try {
+    const resolvedUrl = await resolve(specifier, import.meta.url);
+    const entryPath = fileURLToPath(resolvedUrl);
+    const rootDir = path.dirname(entryPath);
+
+    const packageJsonRootPath = await findUp("package.json", {
+      cwd: rootDir,
+    });
+
+    const packageJsonRootDir = path.dirname(packageJsonRootPath);
+
+    if (!packageJsonRootDir) throw new Error("Module root not found");
+
+    await import(`file://${entryPath}`);
+
+    return {
+      rootDir,
+      packageJsonRootPath,
+      packageJsonRootDir,
+      specifier: specifier,
+      entryPath: entryPath,
+      resolvedUrl: resolvedUrl,
+    };
+  } catch (err) {
+    console.error(`Error resolving root for ${specifier}:`, err.message);
+    return null;
+  }
+}
 
 /**
  * Utility functions for plugin and service management
@@ -84,7 +128,7 @@ const utils = {
     }
   ),
 
-  async loadNpmPlugins(app, pattern = "fastify-multitenant-*") {
+  async getNPMPkgNames(app, pattern = "fastify-multitenant-*") {
     const packageJsonPath = path.join(process.cwd(), "package.json");
 
     try {
@@ -100,6 +144,15 @@ const utils = {
       const pluginNames = Object.keys(dependencies).filter((dep) =>
         new RegExp(pattern).test(dep)
       );
+
+      return pluginNames;
+    } catch (err) {
+      app.log.error(err, `Failed to load package.json for NPM plugins`);
+    }
+  },
+  async loadNpmPlugins(app, pattern = "fastify-multitenant-*") {
+    try {
+      const pluginNames = await utils.getNPMPkgNames(app, pattern);
 
       app.log.info(
         `Found ${pluginNames.length} NPM plugins matching pattern ${pattern}`
@@ -334,9 +387,10 @@ contexts.tenants = {
     return tenant ? tenant.config : null;
   },
 
-  loadTenant: async (app, tenantId) => {
+  loadTenant: async (app, tenantId, absoluteTenantPath) => {
     try {
-      const tenantPath = path.join(__dirname, "tenants", tenantId);
+      const tenantPath =
+        absoluteTenantPath || path.join(__dirname, "tenants", tenantId);
 
       try {
         await fs.access(tenantPath);
@@ -438,7 +492,7 @@ contexts.tenants = {
     }
   },
 
-  loadAllTenants: async (app) => {
+  loadAllTenants: async (app, pattern = "fastify-multitenant-*") => {
     try {
       const tenantsPath = path.join(__dirname, "tenants");
 
@@ -449,7 +503,23 @@ contexts.tenants = {
         return false;
       }
 
-      const tenantDirs = await fs.readdir(tenantsPath);
+      const npmPkgNames = await utils.getNPMPkgNames(app, pattern);
+
+      const tenantDirs = [].concat(
+        await fs.readdir(tenantsPath).then((files) =>
+          files.filter((file) => {
+            return statSync(path.join(tenantsPath, file)).isDirectory();
+          })
+        )
+      );
+
+      console.log({ npmPkgNames, tenantDirs });
+
+      for (const pkgName of npmPkgNames) {
+        console.log(`Loading tenant from NPM package: ${pkgName}`);
+        const absolutePath = await getModuleAbsolutePathRoot(pkgName);
+        await contexts.tenants.loadTenant(app, pkgName, absolutePath.rootDir);
+      }
 
       for (const tenantId of tenantDirs) {
         if (tenantId.startsWith(".")) continue;
@@ -534,10 +604,16 @@ export async function start(options = {}) {
     app.log.error(err, "Failed to load core plugins");
   }
 
-  await utils.loadNpmPlugins(app, config.plugins.npmPattern || "fastify-mt-*");
+  await utils.loadNpmPlugins(
+    app,
+    config.plugins.npmPattern || "fastify-multitenant-*"
+  );
 
   // Load all tenants
-  await contexts.tenants.loadAllTenants(app);
+  await contexts.tenants.loadAllTenants(
+    app,
+    config.plugins.tenantPattern || "fastify-multitenant-*"
+  );
 
   // Configure graceful shutdown
   const closeListeners = closeWithGrace(
